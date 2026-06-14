@@ -1,0 +1,88 @@
+[
+  {
+    "name": "Case A \u2014 pure chat",
+    "in_messages": 10,
+    "in_chars": 22454,
+    "in_est_tokens": 5613,
+    "tool_results": 0,
+    "tool_calls": 0,
+    "compacted": true,
+    "ops_applied": 11,
+    "state_version": 1,
+    "e2e_latency_s": 9.69,
+    "answer_raw": "</mm:think>## PR Summary\n\n**Files changed**\n- `src/db.rs` \u2014 added Pool (size 32) and retry-with-backoff wrapper around `connect()`; public `Db` trait signature unchanged\n- `src/config.rs` \u2014 added `pool_size=32` and retry config (`max_attempts=5`, `base_delay_ms=50`, `max_delay_ms=2000`)\n\n**Key decisions**\n- **Pool size: 32** \u2014 covers p99 ~30 concurrent checkouts with headroom\n- **Retries: 5 attempts max**, exponential backoff **50ms \u2192 2s with full jitter** \u2014 prevents hammering the DB on transient connection errors\n- Off-by-one fix: `<=` \u2192 `<` in retry loop to cap at exactly 5 attempts\n\n**Test result**\n- `cargo test orders v0.3.9`: first run failed (6 attempts instead of 5); after fix, **all 142 tests pass**",
+    "answer": "## PR Summary\n\n**Files changed**\n- `src/db.rs` \u2014 added Pool (size 32) and retry-with-backoff wrapper around `connect()`; public `Db` trait signature unchanged\n- `src/config.rs` \u2014 added `pool_size=32` and retry config (`max_attempts=5`, `base_delay_ms=50`, `max_delay_ms=2000`)\n\n**Key decisions**\n- **Pool size: 32** \u2014 covers p99 ~30 concurrent checkouts with headroom\n- **Retries: 5 attempts max**, exponential backoff **50ms \u2192 2s with full jitter** \u2014 prevents hammering the DB on transient connection errors\n- Off-by-one fix: `<=` \u2192 `<` in retry loop to cap at exactly 5 attempts\n\n**Test result**\n- `cargo test orders v0.3.9`: first run failed (6 attempts instead of 5); after fix, **all 142 tests pass**",
+    "forwarded_messages": 5,
+    "forwarded_roles": [
+      "system",
+      "user",
+      "user",
+      "assistant",
+      "user"
+    ],
+    "forwarded_chars": 1857,
+    "state_block": "# Compacted working context\n(Older turns were summarized into durable state; recent turns are verbatim below.)\n\n## Objective\nRefactor DB layer in `orders`: add connection pool and retry-with-backoff for transient connection errors. Pool must cover p99 ~30 concurrent checkouts; retries must not hammer DB; public `Db` trait signature must not change.\n\n## Constraints / rules (do not violate)\n- Public `Db` trait signature must remain unchanged\n- Retries must not hammer the DB (use jittered exponential backoff)\n- Pool size must cover p99 ~30 concurrent checkouts\n\n## Decisions\n- Pool size = 32 (covers p99 ~30 with headroom)\n- Max 5 attempts, exponential backoff 50ms->2s with full jitter\n- Use `<` (not `<=`) in retry loop to cap at exactly 5 attempts; off-by-one fix after first test run\n\n## Done\n- [x] implement_pool_and_retry (Implemented in src/db.rs and src/config.rs; all 142 tests pass)\n\n## Files touched\n- `src/db.rs` (modified): Added Pool (size 32) and retry-with-backoff wrapper around connect(); public Db trait unchanged\n- `src/config.rs` (modified): Added pool_size=32 and retry config (max_attempts=5, base_delay_ms=50, max_delay_ms=2000)\n\n## Environment facts\n- orders crate version: v0.3.9\n- Test suite: 142 tests (case_000..case_141), all passing after retry-loop fix\n\n## Key tool outcomes\n- cargo test orders v0.3.9: first run FAILED due to off-by-one in retry loop (6 attempts instead of 5); fixed `<=` -> `<` in src/db.rs; re-run ALL 142 TESTS PASS",
+    "forwarded_has_state_block": true,
+    "forwarded_tool_msgs": 0,
+    "tool_pair_safety": {
+      "tail_no_orphan_lead": true,
+      "no_orphan_tool_results": true,
+      "assistant_tool_calls_paired_with_results": true
+    },
+    "preservation": {
+      "files src/db.rs + src/config.rs": true,
+      "pool size 32": true,
+      "max 5 retries": true,
+      "backoff 50ms": true,
+      "backoff cap 2s": true,
+      "off-by-one fixed": true,
+      "142 tests pass": true
+    },
+    "preservation_passed": 7,
+    "preservation_total": 7
+  },
+  {
+    "name": "Case B \u2014 tool-heavy (tool_calls + tool results)",
+    "in_messages": 26,
+    "in_chars": 21783,
+    "in_est_tokens": 5445,
+    "tool_results": 8,
+    "tool_calls": 8,
+    "compacted": true,
+    "ops_applied": 11,
+    "state_version": 1,
+    "e2e_latency_s": 10.42,
+    "answer_raw": "</mm:think>## PR Summary\n\n**Files changed**\n- `src/db.rs` \u2014 added fixed-size connection pool (size 32) and retry-with-backoff wrapper around `connect()`; fixed off-by-one in retry counter (`<=` \u2192 `<`); bumped module header to `// orders v0.4.0`.\n- `src/config.rs` \u2014 added config knobs: `pool_size=32`; `retry{max_attempts:5, base_delay_ms:50, max_delay_ms:2000}`.\n\n**Key decisions**\n- **Pool size 32** \u2014 covers p99 ~30 concurrent checkouts with headroom, without overprovisioning.\n- **Retry policy: max 5 attempts, exponential backoff 50ms \u2192 2s with full jitter** \u2014 bounded attempts prevent hammering; full jitter avoids thundering herd.\n\n**Final test result**\n- `cargo test`: **142 passed, 0 failed** (after fixing the off-by-one retry counter bug).",
+    "answer": "## PR Summary\n\n**Files changed**\n- `src/db.rs` \u2014 added fixed-size connection pool (size 32) and retry-with-backoff wrapper around `connect()`; fixed off-by-one in retry counter (`<=` \u2192 `<`); bumped module header to `// orders v0.4.0`.\n- `src/config.rs` \u2014 added config knobs: `pool_size=32`; `retry{max_attempts:5, base_delay_ms:50, max_delay_ms:2000}`.\n\n**Key decisions**\n- **Pool size 32** \u2014 covers p99 ~30 concurrent checkouts with headroom, without overprovisioning.\n- **Retry policy: max 5 attempts, exponential backoff 50ms \u2192 2s with full jitter** \u2014 bounded attempts prevent hammering; full jitter avoids thundering herd.\n\n**Final test result**\n- `cargo test`: **142 passed, 0 failed** (after fixing the off-by-one retry counter bug).",
+    "forwarded_messages": 7,
+    "forwarded_roles": [
+      "system",
+      "user",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user"
+    ],
+    "forwarded_chars": 2193,
+    "state_block": "# Compacted working context\n(Older turns were summarized into durable state; recent turns are verbatim below.)\n\n## Objective\nRefactor DB layer in `orders`: add connection pool and retry-with-backoff for transient connection errors. Pool must cover p99 ~30 concurrent checkouts; retries must not hammer DB; public `Db` trait signature unchanged.\n\n## Constraints / rules (do not violate)\n- Public `Db` trait signature must not change.\n- Pool must cover p99 ~30 concurrent checkouts (use size >= 30 with headroom).\n- Retries must not hammer the DB (use exponential backoff with jitter, bounded max attempts).\n\n## Decisions\n- Use fixed-size connection pool of size 32 (covers ~30 p99 with headroom). \u2014 p99 is ~30 concurrent checkouts; 32 provides headroom without overprovisioning.\n- Retry policy: max 5 attempts, exponential backoff 50ms -> 2s with full jitter. \u2014 Bounded attempts prevent hammering; full jitter avoids thundering herd.\n\n## Files touched\n- `src/db.rs` (modified): Added fixed-size pool (size 32) and retry-with-backoff wrapper around connect(); off-by-one in retry counter fixed (`<=` -> `<`).\n- `src/config.rs` (modified): Added config knobs: pool_size=32; retry{max_attempts:5, base_delay_ms:50, max_delay_ms:2000}.\n\n## Key tool outcomes\n- [fail] cargo test: 141 passed, 1 failed (db::tests::retry_attempt_cap: expected 5 attempts, got 6; off-by-one `<=` should be `<`).\n- [ok] cargo test after off-by-one fix: 142 passed, 0 failed.\n\n## Artifacts produced\n- orders v0.3.9 \u2014 Crate version compiled during test runs.",
+    "forwarded_has_state_block": true,
+    "forwarded_tool_msgs": 1,
+    "tool_pair_safety": {
+      "tail_no_orphan_lead": true,
+      "no_orphan_tool_results": true,
+      "assistant_tool_calls_paired_with_results": true
+    },
+    "preservation": {
+      "files src/db.rs + src/config.rs": true,
+      "pool size 32": true,
+      "max 5 retries": true,
+      "backoff 50ms": true,
+      "backoff cap 2s": true,
+      "off-by-one fixed": true,
+      "142 tests pass": true
+    },
+    "preservation_passed": 7,
+    "preservation_total": 7
+  }
+]
