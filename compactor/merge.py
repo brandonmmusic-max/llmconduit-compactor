@@ -33,9 +33,12 @@ def _dedup_append(items: List[str], value: str, cap: int) -> None:
 
 def merge(state: CompactState, delta: StateDelta, *, caps: dict | None = None) -> CompactState:
     caps = caps or {}
-    fact_cap = caps.get("facts", 40)
-    tool_cap = caps.get("tool_outcomes", 25)
-    art_cap = caps.get("artifacts", 40)
+    # Bounded view (keeps the rendered block cache-stable) but generous enough to
+    # digest a large document. High-priority items go to typed ops (decisions,
+    # constraints, tasks) which are not capped here, so they survive regardless.
+    fact_cap = caps.get("facts", 100)
+    tool_cap = caps.get("tool_outcomes", 50)
+    art_cap = caps.get("artifacts", 60)
 
     s = state.model_copy(deep=True)
 

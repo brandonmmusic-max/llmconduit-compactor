@@ -60,6 +60,23 @@ def health():
     return {"ok": True, "sessions": len(_SESSIONS)}
 
 
+@app.get("/state/{session_id}")
+def get_state(session_id: str):
+    """Introspection: the materialized view + the raw delta log (the exact ops
+    the extractor emitted) for a session. For reviewing what compaction kept."""
+    entry = _SESSIONS.get(session_id)
+    if not entry:
+        return {"found": False, "session_id": session_id}
+    state, deltas = entry
+    return {
+        "found": True,
+        "session_id": session_id,
+        "state": state.model_dump(),
+        "deltas": [d.model_dump() for d in deltas],
+        "n_ops": sum(len(d.ops) for d in deltas),
+    }
+
+
 @app.post("/compact", response_model=CompactResponse)
 async def compact(req: CompactRequest) -> CompactResponse:
     msgs = req.messages

@@ -58,15 +58,16 @@ def render_state_block(state: CompactState) -> str:
         L += [f"- {c}" for c in state.constraints]
     if state.decisions:
         L.append("\n## Decisions")
-        L += [f"- {d.decision}" + (f" — {d.rationale}" if d.rationale else "") for d in state.decisions]
+        L += [f"- {d.decision}" + (f" — {d.rationale}" if d.rationale else "") + f"  (#{d.id})"
+              for d in state.decisions]
     open_t = [t for t in state.tasks if not t.done]
     done_t = [t for t in state.tasks if t.done]
     if open_t:
         L.append("\n## Open tasks")
-        L += [f"- [ ] {t.task}" for t in open_t]
+        L += [f"- [ ] {t.task}  (#{t.id})" for t in open_t]
     if done_t:
         L.append("\n## Done")
-        L += [f"- [x] {t.task}" + (f" ({t.outcome})" if t.outcome else "") for t in done_t]
+        L += [f"- [x] {t.task}" + (f" ({t.outcome})" if t.outcome else "") + f"  (#{t.id})" for t in done_t]
     if state.files:
         L.append("\n## Files touched")
         L += [f"- `{f.path}` ({f.status}): {f.change}" for f in state.files]
